@@ -256,14 +256,13 @@ pub fn backend_extra_args(
         "-tb".into(), default_threads_batch().to_string(),
         "-np".into(), np.to_string(),
     ];
-    // GPU layers: only passed when explicitly set (env wins, then Modelfile
-    // PARAMETER num_gpu). Unset = backend default (full offload when a GPU
-    // backend exists, CPU-only otherwise).
-    if let Some(ngl) = env("GPU_LAYERS").or_else(|| {
+    // GPU layers: default 99 (full offload; CPU-only builds warn and use
+    // CPU). Explicit LLMON_GPU_LAYERS / PARAMETER num_gpu still wins.
+    // Missing this default is why llmon once ran CPU next to Ollama's GPU.
+    let ngl = env("GPU_LAYERS").or_else(|| {
         manifest.and_then(|m| m.parameters.get("num_gpu").cloned())
-    }) {
-        a.extend(["-ngl".into(), ngl]);
-    }
+    });
+    a.extend(["-ngl".into(), ngl.unwrap_or_else(|| "99".into())]);
     a.extend([
         "-fa".into(), env("FLASH_ATTN").unwrap_or_else(|| "auto".into()),
         "-ctk".into(), env("CACHE_TYPE_K").unwrap_or_else(|| "f16".into()),
