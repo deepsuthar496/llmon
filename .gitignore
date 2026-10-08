@@ -1,0 +1,31 @@
+# Rust build artifacts
+target/
+# Logs & local runtime state
+*.log
+nohup.out
+.llmon/
+# Downloaded weights — never commit these
+*.gguf
+*.gguf.part
+*.bin
+*.safetensors
+model/
+models/
+# Secrets & environment
+.env
+.env.*
+*.pem
+*.key
+# Python caches
+__pycache__/
+*.py[cod]
+# Editors & OS noise
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+# Packaging
+dist/
+
+# Dev-only notes (my purposes, not shipped)
+knowledge/
