@@ -1,6 +1,6 @@
 [package]
 name = "llmon"
-version = "0.1.0"
+version = "0.1.2"
 edition = "2021"
 description = "llmon — fast, lightweight, single-binary LLM runner (Rust). Ollama-compatible, OpenAI-compatible."
 license = "MIT"

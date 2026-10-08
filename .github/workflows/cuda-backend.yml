@@ -1,0 +1,43 @@
+name: cuda-backend
+
+# Builds CUDA-enabled llama-server/llama-cli with NO GPU present
+# (nvcc compiles; GPU only needed at runtime). Run manually, then attach
+# the asset to a release for the Colab/Kaggle notebooks to download.
+on:
+  workflow_dispatch:
+    inputs:
+      llama_ref:
+        description: "llama.cpp ref (tag/commit)"
+        default: "master"
+        required: false
+      cuda_arch:
+        description: "CMAKE_CUDA_ARCHITECTURES (T4=75, A100=80, Ampere=86, Ada=89)"
+        default: "75;80;86;89"
+        required: false
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    container:
+      image: nvidia/cuda:12.8.0-devel-ubuntu22.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: ggml-org/llama.cpp
+          ref: ${{ inputs.llama_ref }}
+          path: llama.cpp
+      - run: apt-get update -qq && apt-get install -y -qq cmake g++ curl ca-certificates
+      - run: |
+          cmake -S llama.cpp -B build -DCMAKE_BUILD_TYPE=Release \
+            -DGGML_CUDA=ON -DGGML_CUDA_FA_ALL_QUANTS=ON \
+            -DCMAKE_CUDA_ARCHITECTURES="${{ inputs.cuda_arch }}" \
+            -DLLAMA_BUILD_TESTS=OFF -DLLAMA_BUILD_EXAMPLES=OFF
+          cmake --build build --target llama-server llama-cli -j$(nproc)
+          mkdir -p dist && cp -P build/bin/llama-server build/bin/llama-cli dist/
+          cp -P build/bin/*.so* dist/ 2>/dev/null || true
+          ./build/bin/llama-server --version | head -n 1
+          tar -czf llama-cuda-backend.tar.gz -C dist .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: llama-cuda-backend
+          path: llama-cuda-backend.tar.gz
